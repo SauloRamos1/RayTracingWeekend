@@ -1,6 +1,11 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
+#include <algorithm>
+#include <execution>
+#include <numeric>
+#include <vector>
+
 #include "color.h"
 #include "hittable.h"
 #include "interval.h"
@@ -24,20 +29,30 @@ public:
 
     void render (const hittable& world) {
         initialize();
-
         std::cout << "P3\n" << image_width << ' ' << image_height_ << "\n255\n";
-        for (int j = 0; j < image_height_; j++) {
-            std::clog << "\rScanlines remaining: " << (image_height_ - j) << ' ' << std::flush;
-            for (int i = 0; i < image_width; i++) {
-                color pixel_color {0,0,0};
-                for (int sample = 0; sample < samples_per_pixel; sample++) {
-                    ray r = get_ray(i,j);
-                    pixel_color += ray_color(r, max_depth, world);
-                }
-                write_color(std::cout, pixel_samples_scale_ * pixel_color);
+
+        const int total_pixels { image_width * image_height_ };
+
+        std::vector<color>image_buffer (total_pixels);
+        std::vector<int>pixel_indices(total_pixels);
+        std::iota(pixel_indices.begin(), pixel_indices.end(), 0);
+
+        std::for_each (std::execution::par, pixel_indices.begin(), pixel_indices.end(), [&] (int index) {
+            const int i = index % image_width;
+            const int j = index / image_width;
+            color pixel_color {0,0,0};
+            for (int sample = 0; sample < samples_per_pixel; sample++) {
+                ray r = get_ray(i,j);
+                pixel_color += ray_color(r, max_depth, world);
             }
+            image_buffer[index] = pixel_samples_scale_ * pixel_color;
+        });
+
+        for (int index = 0; index < total_pixels; index++) {
+            write_color(std::cout, image_buffer[index]);
         }
-        std::clog << "\rDone.                 \n";
+
+        std::clog << "Done.\n";
     }
 
 private:

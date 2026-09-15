@@ -5,26 +5,16 @@
 #include "material.h"
 #include "sphere.h"
 
-static color ray_color (const ray& r, const hittable& world) { // static tells the compiler this function can be use only inside this file/unit
-    hit_record rec;
-    if (world.hit(r, interval(0, infinity), rec))
-        return 0.5 * (rec.normal + color (1,1,1));
-
-    const vec3 unit_direction = unit_vector (r.direction());
-    const auto a = 0.5 * (unit_direction.y() + 1.0);
-    return (1.0 - a) * color (1.0, 1.0, 1.0) + a * color (0.5, 0.7, 1.0);
-}
-
 int main () {
 
     hittable_list world;
 
-    auto ground_material {make_shared<lambertian>(color{0.5,0.5,0.5})};
+    const auto ground_material {make_shared<lambertian>(color{0.5,0.5,0.5})};
     world.add(make_shared<sphere>(point3(0,-1000,0), 1000, ground_material));
 
     for (int a = -11; a < 11; a++) {
         for (int b = -11; b < 11; b++) {
-            auto choose_mat = random_double();
+            const auto choose_mat = random_double();
             point3 center (a + 0.9 * random_double(), 0.2, b + 0.9 * random_double());
 
             if ((center - point3(4, 0.2, 0)).length() > 0.9) {
@@ -32,13 +22,13 @@ int main () {
 
                 if (choose_mat < 0.8) {
                     // Diffuse
-                    auto albedo = color::random() * color::random();
+                    const auto albedo = color::random() * color::random();
                     sphere_material = make_shared<lambertian>(albedo);
                     world.add(make_shared<sphere>(center, 0.2, sphere_material));
                 } else if (choose_mat < 0.95){
                     // Metal
-                    auto albedo = color::random(0.5, 1);
-                    auto fuzz = random_double(0, 0.5);
+                    const auto albedo = color::random(0.5, 1);
+                    const auto fuzz = random_double(0, 0.5);
                     sphere_material = make_shared<metal>(albedo, fuzz);
                     world.add(make_shared<sphere>(center, 0.2, sphere_material));
                 } else {

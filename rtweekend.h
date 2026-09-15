@@ -19,9 +19,9 @@ inline double degrees_to_radians(const double degrees) {
 }
 
 inline double random_double() {
-    static std::random_device rd;
-    static std::mt19937 gen(rd());
-    static std::uniform_real_distribution<double> dis(0.0, 1.0);
+    // thread_local: each render thread owns its generator (no data race under std::execution::par)
+    thread_local std::mt19937 gen(std::random_device{}());
+    thread_local std::uniform_real_distribution<double> dis(0.0, 1.0);
     return dis(gen);
 }
 
